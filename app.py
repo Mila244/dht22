@@ -1,17 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask
 
 app = Flask(__name__)
 
-@app.route('/sensordata', methods=['POST'])
-def recibir_datos():
-    datos = request.get_json()
-    temperatura = datos.get('temperatura')
-    humedad = datos.get('humedad')
-    
-    print(f"Temperatura: {temperatura}°C | Humedad: {humedad}%")
-    
-    return jsonify({"status": "Datos recibidos"}), 200
+@app.route('/')
+def home():
+    return "Servidor Flask corriendo en Render 🎉"
 
-# Para Render, no pongas host='localhost'
 if __name__ == '__main__':
-    app.run()
+    import os
+    port = int(os.environ.get("PORT", 5000))  # Render asigna el puerto por variable de entorno
+    app.run(host='0.0.0.0', port=port)
