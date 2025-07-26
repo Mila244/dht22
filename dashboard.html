@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard Sensor DHT22</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f2f5;
+    }
+    .tarjeta {
+      display: inline-block;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin: 20px;
+      width: 150px;
+    }
+    .valor {
+      font-size: 2em;
+      font-weight: bold;
+    }
+    .titulo {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .barra {
+      height: 15px;
+      border-radius: 5px;
+      background: #ddd;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .relleno-temp {
+      height: 100%;
+      background: red;
+    }
+    .relleno-hum {
+      height: 100%;
+      background: blue;
+    }
+  </style>
+</head>
+<body>
+  <h2>🌡️ Dashboard Sensor DHT22</h2>
+
+  <div class="tarjeta">
+    <div class="titulo">Temperatura</div>
+    <div class="valor" id="tempValor">-- °C</div>
+    <div class="barra"><div id="barraTemp" class="relleno-temp" style="width: 0%;"></div></div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="titulo">Humedad</div>
+    <div class="valor" id="humValor">-- %</div>
+    <div class="barra"><div id="barraHum" class="relleno-hum" style="width: 0%;"></div></div>
+  </div>
+
+  <canvas id="myChart" width="400" height="200"></canvas>
+
+  <script>
+    const channelID = "3018989";
+    const apiKey = "R7P9X5JMGYEK1DB6";
+
+    async function obtenerDatos() {
+      const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?results=10&api_key=${apiKey}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      const feeds = data.feeds;
+      const etiquetas = feeds.map(entry => entry.created_at.slice(11, 19));
+      const temperatura = feeds.map(entry => parseFloat(entry.field1));
+      const humedad = feeds.map(entry => parseFloat(entry.field2));
+
+      const tempActual = temperatura[temperatura.length - 1];
+      const humActual = humedad[humedad.length - 1];
+
+      // Mostrar valores actuales
+      document.getElementById("tempValor").textContent = tempActual.toFixed(1) + " °C";
+      document.getElementById("humValor").textContent = humActual.toFixed(1) + " %";
+
+      // Simular termómetro: ajustar barra según valor (hasta 50°C y 100%)
+      document.getElementById("barraTemp").style.width = `${(tempActual / 50) * 100}%`;
+      document.getElementById("barraHum").style.width = `${(humActual)}%`;
+
+      // Mostrar gráfico
+      const ctx = document.getElementById('myChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: etiquetas,
+          datasets: [
+            {
+              label: 'Temperatura (°C)',
+              data: temperatura,
+              borderColor: 'red',
+              fill: false
+            },
+            {
+              label: 'Humedad (%)',
+              data: humedad,
+              borderColor: 'blue',
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+
+    obtenerDatos();
+  </script>
+</body>
+</html>
