@@ -1,12 +1,13 @@
 from flask import Flask
+import os
 
 app = Flask(__name__)
 
 @app.route('/')
-def home():
-    return "Servidor Flask corriendo en Render 🎉"
+def index():
+    return "✅ Flask funcionando correctamente en Render 🎉"
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))  # Render asigna el puerto por variable de entorno
+    # Render asigna el puerto automáticamente a través de la variable de entorno PORT
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
