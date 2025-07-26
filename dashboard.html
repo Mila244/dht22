@@ -1,68 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Dashboard Sensor DHT22</title>
+  <meta charset="UTF-8">
+  <title>Dashboard Futurista DHT22</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      background: #0f2027;  /* Dark gradient */
+      background: linear-gradient(to right, #2c5364, #203a43, #0f2027);
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
       text-align: center;
-      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
     }
-    .tarjeta {
-      display: inline-block;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      padding: 20px;
-      margin: 20px;
-      width: 150px;
-    }
-    .valor {
+
+    h1 {
+      margin-top: 30px;
       font-size: 2em;
-      font-weight: bold;
+      color: #00e5ff;
+      text-shadow: 0 0 10px #00e5ff;
     }
-    .titulo {
+
+    .tarjetas {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .card {
+      background: #1c1f2a;
+      border-radius: 16px;
+      box-shadow: 0 0 15px rgba(0,229,255,0.3);
+      padding: 20px;
+      width: 220px;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card-icon {
+      font-size: 3em;
+      margin-bottom: 10px;
+      color: #00e5ff;
+      animation: glow 2s infinite alternate;
+    }
+
+    .title {
       font-size: 1.2em;
       margin-bottom: 10px;
     }
-    .barra {
-      height: 15px;
-      border-radius: 5px;
-      background: #ddd;
-      overflow: hidden;
-      margin-top: 10px;
+
+    .value {
+      font-size: 2.5em;
+      font-weight: bold;
     }
-    .relleno-temp {
-      height: 100%;
-      background: red;
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #00e5ff; }
+      to   { text-shadow: 0 0 20px #00e5ff; }
     }
-    .relleno-hum {
-      height: 100%;
-      background: blue;
+
+    canvas {
+      margin-top: 40px;
+      max-width: 90%;
+      background-color: #1c1f2a;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,229,255,0.2);
     }
   </style>
 </head>
 <body>
-  <h2>🌡️ Dashboard Sensor DHT22</h2>
 
-  <div class="tarjeta">
-    <div class="titulo">Temperatura</div>
-    <div class="valor" id="tempValor">-- °C</div>
-    <div class="barra"><div id="barraTemp" class="relleno-temp" style="width: 0%;"></div></div>
+  <h1>🌐 Dashboard Futurista - Sensor DHT22</h1>
+
+  <div class="tarjetas">
+    <div class="card">
+      <div class="card-icon">🌡️</div>
+      <div class="title">Temperatura</div>
+      <div class="value" id="temp">-- °C</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💧</div>
+      <div class="title">Humedad</div>
+      <div class="value" id="hum">-- %</div>
+    </div>
   </div>
 
-  <div class="tarjeta">
-    <div class="titulo">Humedad</div>
-    <div class="valor" id="humValor">-- %</div>
-    <div class="barra"><div id="barraHum" class="relleno-hum" style="width: 0%;"></div></div>
-  </div>
-
-  <canvas id="myChart" width="400" height="200"></canvas>
+  <canvas id="myChart" height="150"></canvas>
 
   <script>
     const channelID = "3018989";
     const apiKey = "R7P9X5JMGYEK1DB6";
+
+    let chart;
 
     async function obtenerDatos() {
       const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?results=10&api_key=${apiKey}`;
@@ -77,17 +114,13 @@
       const tempActual = temperatura[temperatura.length - 1];
       const humActual = humedad[humedad.length - 1];
 
-      // Mostrar valores actuales
-      document.getElementById("tempValor").textContent = tempActual.toFixed(1) + " °C";
-      document.getElementById("humValor").textContent = humActual.toFixed(1) + " %";
+      document.getElementById("temp").innerText = `${tempActual.toFixed(1)} °C`;
+      document.getElementById("hum").innerText = `${humActual.toFixed(1)} %`;
 
-      // Simular termómetro: ajustar barra según valor (hasta 50°C y 100%)
-      document.getElementById("barraTemp").style.width = `${(tempActual / 50) * 100}%`;
-      document.getElementById("barraHum").style.width = `${(humActual)}%`;
-
-      // Mostrar gráfico
+      // Inicializar o actualizar gráfico
       const ctx = document.getElementById('myChart').getContext('2d');
-      new Chart(ctx, {
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: etiquetas,
@@ -95,22 +128,42 @@
             {
               label: 'Temperatura (°C)',
               data: temperatura,
-              borderColor: 'red',
-              fill: false
+              borderColor: '#ff4081',
+              backgroundColor: 'rgba(255,64,129,0.1)',
+              fill: true,
+              tension: 0.4
             },
             {
               label: 'Humedad (%)',
               data: humedad,
-              borderColor: 'blue',
-              fill: false
+              borderColor: '#40c4ff',
+              backgroundColor: 'rgba(64,196,255,0.1)',
+              fill: true,
+              tension: 0.4
             }
           ]
         },
         options: {
           responsive: true,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#eee',
+                font: {
+                  size: 14
+                }
+              }
+            }
+          },
           scales: {
+            x: {
+              ticks: { color: '#aaa' },
+              grid: { color: '#333' }
+            },
             y: {
-              beginAtZero: false
+              beginAtZero: false,
+              ticks: { color: '#aaa' },
+              grid: { color: '#333' }
             }
           }
         }
@@ -118,6 +171,8 @@
     }
 
     obtenerDatos();
+    setInterval(obtenerDatos, 15000);
   </script>
+
 </body>
 </html>
